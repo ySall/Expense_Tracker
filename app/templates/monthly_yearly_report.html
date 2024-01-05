@@ -1,0 +1,277 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div class="report">
+    <h1 class="text-green">Monthly Report</h1>
+    <br>
+
+    <div class="select-list">
+        <form method="POST" action="">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="income">
+        <h3 style="color: #de2a57;">Total Outcome</h3>
+        <table class="table table-striped text-light">
+            <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Total</th>
+            </tr>
+            {% for income_item in income_data_all %}
+            <tr>
+                <td>{{ income_item.category }}</td>
+                <td>{{ income_item.description }}</td>
+                <td>{{ month_abbreviation(income_item.month) }}</td>
+                <td>{{ income_item.year }}</td>
+                <td>
+                    {% if current_currency == 'USD' %}
+                    ${{ income_item.total }}
+                    {% elif current_currency == 'KHR' %}
+                    {{ income_item.total * 4100 }} Riel
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <br>
+    <div class="outcome">
+        <h3 style="color: #1ed64f;">Total Income</h3>
+        <table class="table table-striped text-light">
+            <tr>
+                <th>Source</th>
+                <th>Description</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Total</th>
+            </tr>
+            {% for outcome_item in outcome_data_all %}
+            <tr>
+                <td>{{ outcome_item.source }}</td>
+                <td>{{ outcome_item.description }}</td>
+                <td>{{ month_abbreviation(outcome_item.month) }}</td>
+                <td>{{ outcome_item.year }}</td>
+                <td>
+                    {% if current_currency == 'USD' %}
+                    ${{ outcome_item.total }}
+                    {% elif current_currency == 'KHR' %}
+                    {{ outcome_item.total * 4100 }} Riel
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="row text-light">
+        <div class="col-lg-6 mb-lg-0 mb-4">
+          <div class="card z-index-2">
+            <div class="card-header pb-0">
+              <h5>Outcome Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart" width="10" height="10">
+                    <canvas id="incomeChart" width="10" height="10"></canvas>
+                    <a href="{{ url_for('download_outcome_csv') }}" class="btn btn-primary">Download All Outcome CSV</a>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-lg-0 mb-4">
+            <div class="card z-index-2">
+              <div class="card-header pb-0">
+                <h5>Income Distribution</h5>
+              </div>
+              <div class="card-body">
+                <div class="chart">
+                    <canvas id="outcomeChart" width="10" height="10"></canvas>
+                    <a href="{{ url_for('download_income_csv') }}" class="btn btn-primary">Download All Income CSV</a>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+    <div class="select-list mt-5">
+        <form method="POST" action="{{ url_for('download_income_csv') }}">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Download Income</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="select-list">
+        <form method="POST" action="{{ url_for('download_outcome_csv') }}">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Download Outcome</button>
+    </div>
+<!-- Add Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Function to create Pie Chart
+        function createPieChart(chartId, labels, data, backgroundColor, title) {
+            var ctx = document.getElementById(chartId).getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColor,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: title
+                    },
+                    elements: {
+                        arc: {
+                            borderWidth: 0.5,
+                        },
+                    },
+                    layout: {
+                        padding: {
+                            left: 50,
+                            right: 50,
+                            top: 50,
+                            bottom: 50
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    },
+                    radius: 120, // Adjust the radius to control the size of the pie chart
+                }
+            });
+        }
+
+        // Function to generate light colors
+        function generateLightColors(count) {
+            var colors = [];
+            for (var i = 0; i < count; i++) {
+                colors.push(getLightColor());
+            }
+            return colors;
+        }
+
+        // Function to get a light color
+        function getLightColor() {
+            var hue = Math.floor(Math.random() * 360);
+            return 'hsl(' + hue + ', 70%, 80%)';
+        }
+
+        // Data for Income Pie Chart
+        var incomeLabels = {{ income_data_all | map(attribute='category') | list | tojson }};
+        var incomeData = {{ income_data_all | map(attribute='total') | list | tojson }};
+        var incomeBackgroundColor = generateLightColors(incomeLabels.length);
+
+        // Data for Outcome Pie Chart
+        var outcomeLabels = {{ outcome_data_all | map(attribute='source') | list | tojson }};
+        var outcomeData = {{ outcome_data_all | map(attribute='total') | list | tojson }};
+        var outcomeBackgroundColor = generateLightColors(outcomeLabels.length);
+
+        // Define the conversion rate for KHR
+        var conversionRateKHR = 4100;
+
+        // Convert values based on the selected currency
+        if ("{{ current_currency }}" === "KHR") {
+            incomeData = incomeData.map(value => value * conversionRateKHR);
+            outcomeData = outcomeData.map(value => value * conversionRateKHR);
+        }
+
+        // Create Income and Outcome Pie Charts
+        createPieChart('incomeChart', incomeLabels, incomeData, incomeBackgroundColor, 'Income Distribution');
+        createPieChart('outcomeChart', outcomeLabels, outcomeData, outcomeBackgroundColor, 'Outcome Distribution');
+    });
+</script>
+
+{% endblock %}

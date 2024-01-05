@@ -1,0 +1,350 @@
+{% extends 'layout.html' %}
+{% block body %}
+<h1 class="text-dark mt-2 font-weight-bold ml-3 mb-3">Expend Trend</h1>
+
+<!-- Add this in the body section of your HTML file -->
+<div class="row text-light">
+    <div class="col-lg-4 mb-lg-0 mb-4">
+        <div class="card z-index-2">
+            <div class="card-header pb-0 mb-2">
+                <h5>Score Review</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="myChart" width="50px" height="50px"></canvas>
+                <h5 class="mt-5">{{suggestions}}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="z-index-2">
+            <div>
+                <div class="row mb-2">
+                    <div class="col-xl-6 col-lg-6 mb-1">
+                        <div class="card flex-fill flex-column">
+                            <div class="card-statistic-3 p-3 flex-fill">
+                                <div class="mb-4">
+                                    <h6 class="card-title mb-0">Expense in the last 30 days</h6>
+                                </div>
+                                <div class="align-items-center mb-2 d-flex">
+                                        <h2 class="d-flex align-items-center mb-2 mt-1">
+                                            
+                                            {% if transactions_last_30_days %}
+    {% if current_currency == 'USD' %}
+        ${{ transactions_last_30_days }}
+    {% elif current_currency == 'KHR' %}
+        {% if transactions_last_30_days is not none %}
+            {{ transactions_last_30_days * 4100 }} Riel
+        {% else %}
+            0 Riel
+        {% endif %}
+    {% endif %}
+{% else %}
+    {% if current_currency == 'USD' %}
+        $0.00
+    {% elif current_currency == 'KHR' %}
+        0 Riel
+    {% endif %}
+{% endif %}
+                                        </h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6 col-lg-6 mb-1 d-flex">
+                        <div class="card flex-fill flex-column">
+                            <div class="card-statistic-3 p-3 flex-fill">
+                                <div class="mb-4">
+                                    <h6 class="card-title mb-0">Compare to the previous month</h6>
+                                </div>
+                                <div class="row align-items-center mb-2 d-flex">
+                                    <h5 class="d-flex align-items-center mb-0">
+                                        {% if percentage_change > 0 %}
+                                        <span>Attention! Your expenses have increased by <span
+                                                style="color: red;">{{percentage_change}}%</span> compared to the
+                                            previous month.</span>
+                                        {% elif percentage_change < 0 %} <span>Good job! You've managed to reduce your
+                                            expenses by <span style="color: green;">{{percentage_change}}%</span>
+                                            compared to the previous month.</span>
+                                            {% else %}
+                                            <span>Your expenses have remained the same compared to the previous
+                                                month.</span>
+                                            {% endif %}
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row text-light mb-3">
+                    <div class="col-lg-12">
+                      <div class="card z-index-2">
+                        <div class="card-header pb-0">
+                          <h5>Balance Overview</h5>
+                        </div>
+                        <div class="card-body p-3">
+                          <div class="chart">
+                            <canvas id="my-canvas" width="400" height="400"></canvas>
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js library -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.bundle.js"></script>
+
+<script>
+    // round corners
+    var userScore = {{ user_score }};
+    var chartData = [userScore, 100 - userScore];
+
+    Chart.pluginService.register({
+        afterUpdate: function (chart) {
+            if (chart.config.options.elements.arc.roundedCornersFor !== undefined) {
+                var arc = chart.getDatasetMeta(0).data[chart.config.options.elements.arc.roundedCornersFor];
+                arc.round = {
+                    x: (chart.chartArea.left + chart.chartArea.right) / 2,
+                    y: (chart.chartArea.top + chart.chartArea.bottom) / 2,
+                    radius: (chart.outerRadius + chart.innerRadius) / 2,
+                    thickness: (chart.outerRadius - chart.innerRadius) / 2 - 1,
+                    backgroundColor: arc._model.backgroundColor
+                }
+            }
+        },
+
+        afterDraw: function (chart) {
+            if (chart.config.options.elements.arc.roundedCornersFor !== undefined) {
+                var ctx = chart.chart.ctx;
+                var arc = chart.getDatasetMeta(0).data[chart.config.options.elements.arc.roundedCornersFor];
+                var startAngle = Math.PI / 2 - arc._view.startAngle;
+                var endAngle = Math.PI / 2 - arc._view.endAngle;
+
+                ctx.save();
+                ctx.translate(arc.round.x, arc.round.y);
+                ctx.fillStyle = arc.round.backgroundColor;
+                ctx.beginPath();
+                ctx.arc(arc.round.radius * Math.sin(startAngle), arc.round.radius * Math.cos(startAngle), arc.round.thickness, 0, 2 * Math.PI);
+                ctx.arc(arc.round.radius * Math.sin(endAngle), arc.round.radius * Math.cos(endAngle), arc.round.thickness, 0, 2 * Math.PI);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        },
+    });
+
+    // write text plugin
+    Chart.pluginService.register({
+        afterUpdate: function (chart) {
+            if (chart.config.options.elements.center) {
+                var helpers = Chart.helpers;
+                var centerConfig = chart.config.options.elements.center;
+                var globalConfig = Chart.defaults.global;
+                var ctx = chart.chart.ctx;
+
+                var fontStyle = helpers.getValueOrDefault(centerConfig.fontStyle, globalConfig.defaultFontStyle);
+                var fontFamily = helpers.getValueOrDefault(centerConfig.fontFamily, globalConfig.defaultFontFamily);
+
+                if (centerConfig.fontSize)
+                    var fontSize = centerConfig.fontSize;
+                else {
+                    ctx.save();
+                    var fontSize = helpers.getValueOrDefault(centerConfig.minFontSize, 1);
+                    var maxFontSize = helpers.getValueOrDefault(centerConfig.maxFontSize, 256);
+                    var maxText = helpers.getValueOrDefault(centerConfig.maxText, centerConfig.text);
+
+                    do {
+                        ctx.font = helpers.fontString(fontSize, fontStyle, fontFamily);
+                        var textWidth = ctx.measureText(maxText).width;
+
+                        if (textWidth < chart.innerRadius * 2 && fontSize < maxFontSize)
+                            fontSize += 1;
+                        else {
+                            fontSize -= 1;
+                            break;
+                        }
+                    } while (true)
+                    ctx.restore();
+                }
+
+                chart.center = {
+                    font: helpers.fontString(fontSize, fontStyle, fontFamily),
+                    fillStyle: helpers.getValueOrDefault(centerConfig.fontColor, globalConfig.defaultFontColor)
+                };
+            }
+        },
+        afterDraw: function (chart) {
+            if (chart.center) {
+                var centerConfig = chart.config.options.elements.center;
+                var ctx = chart.chart.ctx;
+
+                ctx.save();
+                ctx.font = chart.center.font;
+                ctx.fillStyle = chart.center.fillStyle;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                var centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                var centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                ctx.fillText(centerConfig.text, centerX, centerY);
+                ctx.restore();
+            }
+        },
+    });
+
+
+    // Your data for the chart goes here
+    var data = {
+        labels: ["", ""],
+        datasets: [{
+            data: [userScore, 100 - userScore],
+            backgroundColor: [getColor(userScore), "#eeeeee"],
+        }],
+    };
+
+    function getColor(score) {
+        if (score === 100) {
+            return "#00FF00"; // Fully green
+        } else if (score >= 85) {
+            return "#00FF00"; // Normal green
+        } else if (score >= 60) {
+            return "#ADFF2F"; // Green to yellow
+        } else if (score >= 50) {
+            return "#FFFF00"; // Yellow
+        } else if (score >= 30) {
+            return "#FFD700"; // Yellow to red
+        } else if (score >= 10) {
+            return "#FF0000"; // Red
+        } else {
+            return "#cccccc"; // Default color
+        }
+    }
+
+    // Create a new chart instance
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'doughnut', // Change this to the type of chart you want
+        data: data,
+        options: {
+            cutoutPercentage: 70, // Adjust this value to control the size of the hole (50% means half of the chart size)
+
+            elements: {
+                arc: {
+                    roundedCornersFor: 0
+                },
+                center: {
+                    // the longest text that could appear in the center
+                    maxText: '100%',
+                    text: userScore,
+                    fontColor: '#000000',
+                    fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                    fontStyle: 'normal',
+                    // fontSize: 12,
+                    // if a fontSize is NOT specified, we will scale (within the below limits) maxText to take up the maximum space in the center
+                    // if these are not specified either, we default to 1 and 256
+                    minFontSize: 1,
+                    maxFontSize: 50,
+                }
+            },
+            legend: {
+                display: false
+            },
+            hover: {
+                onHover: function (event, chartElement) {
+                    chartElement[0].style.cursor = 'default';
+                }
+            }
+        }
+    });
+
+    var tsCanvas = document.getElementById('my-canvas');
+
+    var tsChart = new Chart(tsCanvas, {
+        type: 'line',
+        data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            datasets: [
+                {
+                    label: 'Balance',
+                    yAxisID: 'Balance',
+                    data: [{% for data in balance_data_chart %}{{ data["Balance"] }},{% endfor %}],
+                    backgroundColor: 'rgba(0, 0, 0, 0)',  // Set background color to fully transparent
+                    borderColor: 'rgba(26, 187, 156, 1)',
+                    pointBackgroundColor: 'rgba(26, 187, 156, 1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0
+                },
+                {
+                    label: 'Score',
+                    yAxisID: 'Score',
+                    data: [{% for data in balance_data_chart %}{{ data["Score"] * 100 }},{% endfor %}],
+                    backgroundColor: 'rgba(0, 0, 0, 0)',  // Set background color to fully transparent
+                    borderColor: 'rgba(90, 144, 197, 1)',
+                    pointBackgroundColor: 'rgb(0, 144, 197, 1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            hover: {
+                animationDuration: 0
+            },
+            tooltips: {
+                mode: 'index',
+                multiKeyBackground: 'rgba(255,255,255,0.55)'
+            },
+            scales: {
+                yAxes: [
+                    {
+                        id: 'Balance',
+                        type: 'linear',
+                        position: 'left',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Balance'
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        },
+                        gridLines: {
+                            display: false  // Hide grid lines
+                        }
+                    },
+                    {
+                        id: 'Score',
+                        type: 'linear',
+                        position: 'right',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Score (%)'
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        },
+                        gridLines: {
+                            display: false  // Hide grid lines
+                        }
+                    }
+                ],
+                xAxes: [
+                    {
+                        type: 'category',
+                        ticks: {
+                            minRotation: 50,
+                            maxRotation: 50
+                        }
+                    }
+                ]
+            }
+        }
+    });
+
+</script>
+
+{% endblock %}

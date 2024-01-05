@@ -1,0 +1,199 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div class="report">
+    <br>
+    <h1 class="text-green">Income vs Expense</h1>
+    <br>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div class="select-list">
+        <form method="POST" action="" style="padding-top: 20px;">
+            <div class="form-group row">
+                <div class="form-group col-md-4">
+                    <input type="number" placeholder="Select Year" name="year" class="form-control" value="2020" />
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+                <div class="form-group col-md-2">
+                    {% if selected_year %}
+                    <a href="{{ url_for('download_csv', year=selected_year) }}" class="btn btn-success">Download CSV</a>
+                    {% endif %}
+                </div>
+                <div class="form-group col-md-2">
+                    {% if selected_year %}
+                    <a href="{{ url_for('download_csv', year='all') }}" class="btn btn-success">Download CSV All</a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="income-outcome-wrapper">
+        <div class="income">
+            <h3 style="color: #de2a57;">Total Outcome</h3>
+            <table class="table table-striped text-light">
+                <tr>
+                    <th>Category</th>
+                    <th>Jan</th>
+                    <th>Feb</th>
+                    <th>Mar</th>
+                    <th>Apr</th>
+                    <th>May</th>
+                    <th>Jun</th>
+                    <th>Jul</th>
+                    <th>Aug</th>
+                    <th>Sep</th>
+                    <th>Oct</th>
+                    <th>Nov</th>
+                    <th>Dec</th>
+                    <th>Total</th>
+                    <th>Average</th>
+                </tr>
+                {% for category in income_data|map(attribute='category')|unique %}
+                <tr>
+                    <td>{{ category }}</td>
+                    {% for month in range(1, 13) %}
+                    <td>
+                        {% set total = income_data|selectattr('category', 'equalto', category)|selectattr('month', 'equalto', month)|map(attribute='total')|default([])|sum %}
+                        {% if current_currency == 'USD' %}
+                        ${{ total }}
+                        {% elif current_currency == 'KHR' %}
+                        {{ total * 4100 }} Riel 
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td>
+                        {% set category_data = income_data|selectattr('category', 'equalto', category) %}
+                        {% set total = category_data|map(attribute='total')|default([])|sum %}
+                        {% if current_currency == 'USD' %}
+                        ${{ total }}
+                        {% elif current_currency == 'KHR' %}
+                        {{ total * 4100 }} Riel 
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set category_data = income_data|selectattr('category', 'equalto', category)|list %}
+                        {% set total = category_data|map(attribute='total')|default([])|sum %}
+                        {% set count = category_data|length %}
+                        {% set average = total / count if count > 0 else 0 %}
+                        {% if current_currency == 'USD' %}
+                        ${{ average|round(2) }}
+                        {% elif current_currency == 'KHR' %}
+                        {{ average|round(2) * 4100 }} Riel
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="outcome">
+            <h3 style="color: #1ed64f;">Total Income</h3>
+            <table class="table table-striped text-light">
+                <tr>
+                    <th>Category</th>
+                    <th>Jan</th>
+                    <th>Feb</th>
+                    <th>Mar</th>
+                    <th>Apr</th>
+                    <th>May</th>
+                    <th>Jun</th>
+                    <th>Jul</th>
+                    <th>Aug</th>
+                    <th>Sep</th>
+                    <th>Oct</th>
+                    <th>Nov</th>
+                    <th>Dec</th>
+                    <th>Total</th>
+                    <th>Average</th>
+                </tr>
+                {% for category in outcome_data|map(attribute='source')|unique %}
+                <tr>
+                    <td>{{ category }}</td>
+                    {% for month in range(1, 13) %}
+                    <td>
+                        {% set total = outcome_data|selectattr('source', 'equalto', category)|selectattr('month', 'equalto', month)|map(attribute='total')|default([])|sum %}
+                        {% if current_currency == 'USD' %}
+                        ${{ total }}
+                        {% elif current_currency == 'KHR' %}
+                        {{ total * 4100 }} Riel
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td>
+                        {% set category_data = outcome_data|selectattr('source', 'equalto', category) %}
+                        {% set total = category_data|map(attribute='total')|default([])|sum %}
+                        {% if current_currency == 'USD' %}
+                        ${{ total }}
+                        {% elif current_currency == 'KHR' %}
+                        {{ total * 4100 }} Riel
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set category_data = outcome_data|selectattr('source', 'equalto', category)|list %}
+                        {% set total = category_data|map(attribute='total')|default([])|sum %}
+                        {% set count = category_data|length %}
+                        {% set average = total / count if count > 0 else 0 %}
+                        {% if current_currency == 'USD' %}
+                        ${{ average|round(2) }}
+                        {% elif current_currency == 'KHR' %}
+                        {{ average|round(2) * 4100 }} Riel
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}    
+            </table>
+        </div>
+    </div>
+    <canvas id="categoryChart" width="400" height="200"></canvas>
+
+    <script>
+        // Get data from the server-side (replace with actual data)
+        var incomeData = {{ income_data | tojson }};
+        var outcomeData = {{ outcome_data | tojson }};
+    
+        // Extract labels and values for the chart
+        var incomeLabels = incomeData.map(item => item.category);
+        var incomeValues = incomeData.map(item => item.total);
+        var outcomeLabels = outcomeData.map(item => item.source);
+        var outcomeValues = outcomeData.map(item => item.total);
+    
+        // Define the conversion rate for KHR
+        var conversionRateKHR = 4100;
+    
+        // Convert values based on the selected currency
+        if ("{{ current_currency }}" === "KHR") {
+            incomeValues = incomeValues.map(value => value * conversionRateKHR);
+            outcomeValues = outcomeValues.map(value => value * conversionRateKHR);
+        }
+    
+        // Create a bar chart
+        var ctx = document.getElementById('categoryChart').getContext('2d');
+        var categoryChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: incomeLabels.concat(outcomeLabels),
+                datasets: [{
+                    label: 'Income',
+                    data: incomeValues.concat(Array(outcomeLabels.length).fill(0)),
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)', // Adjust color as needed
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Outcome',
+                    data: Array(incomeLabels.length).fill(0).concat(outcomeValues),
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)', // Adjust color as needed
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true }
+                }
+            }
+        });
+    </script>
+</div>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <main class="col-md-9 mx-auto col-lg-10 px-md-6 py-4">
+            <h1 class="h2">Budget Projection</h1>
+            <p class="lead">This page displays the budget projection based on historical data and trends.</p>
+            <!-- Budget Projection Form -->
+            <form method="post" action="/budget_projection">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="selectMonth" class="form-label">Select Month:</label>
+                        <select class="form-select" id="selectMonth" name="selected_month">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="selectYear" class="form-label">Select Year:</label>
+                        <select class="form-select" id="selectYear" name="selected_year">
+                            {% for year in unique_years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mb-4">Generate Projection</button>
+                
+            </form>
+            <!-- Budget Cards -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-4">
+                <!-- Income Block -->
+                <div class="col">
+                    <div class="card">
+                        <h5 class="card-header" style="background-color: rgb(113, 144, 227); color: white;">Income</h5>
+                        <div class="card-body">
+                            <h5 class="card-title">{% if current_currency == 'USD' %}
+                                ${{ total_income }}
+                                {% elif current_currency == 'KHR' %}
+                                {{ total_income * 4100 }} Riel
+                                {% endif %}</h5>
+                            <p class="card-text" style="font-size: 14px; color: grey;">Total Income for this year</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Expenses Block -->
+                <div class="col">
+                    <div class="card">
+                        <h5 class="card-header" style="background-color: #e260c6; color: white;">Expenses</h5>
+                        <div class="card-body">
+                            <h5 class="card-title">{% if current_currency == 'USD' %}
+                                ${{ total_expenses }}
+                                {% elif current_currency == 'KHR' %}
+                                {{ total_expenses * 4100 }} Riel
+                                {% endif %}</h5>
+                            <p class="card-text" style="font-size: 14px; color: grey;">Total Expenses for this year</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Profit Block -->
+                <div class="col">
+                    <div class="card">
+                        <h5 class="card-header" style="background-color: #2ac5dd; color: white;">Profit</h5>
+                        <div class="card-body">
+                            <h5 class="card-title">{% if profit %}
+                                {% if current_currency == 'USD' %}
+                                    ${{ profit }}
+                                {% elif current_currency == 'KHR' %}
+                                    {% if profit is not none %}
+                                        {{ profit * 4100 }} Riel
+                                    {% else %}
+                                        0 Riel
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                {% if current_currency == 'USD' %}
+                                    $0.00
+                                {% elif current_currency == 'KHR' %}
+                                    0 Riel
+                                {% endif %}
+                            {% endif %}</h5>
+                            <p class="card-text" style="font-size: 14px; color: grey;">Profit or Loss for this year</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Last Month Profit Block -->
+                <div class="col">
+                    <div class="card">
+                        <h5 class="card-header" style="background-color: #FFCE56; color: white;">Last Year Profit</h5>
+                        <div class="card-body">
+                            <h5 class="card-title">{% if profit_last_year %}
+                                {% if current_currency == 'USD' %}
+                                    ${{ profit_last_year }}
+                                {% elif current_currency == 'KHR' %}
+                                    {% if profit_last_year is not none %}
+                                        {{ profit_last_year * 4100 }} Riel
+                                    {% else %}
+                                        0 Riel
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                {% if current_currency == 'USD' %}
+                                    $0.00
+                                {% elif current_currency == 'KHR' %}
+                                    0 Riel
+                                {% endif %}
+                            {% endif %}</h5>
+                            <p class="card-text" style="font-size: 14px; color: grey;">Profit or Loss for the last year</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Budget Projection Chart -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <h5 class="card-header">Budget Projection Trend</h5>
+                        <div class="card-body">
+                            <canvas id="chart-line" height="300"></canvas>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <small>
+                                Chart represents the trend of 
+                                <span style="color: rgb(87, 95, 154);">Total Income</span> | 
+                                <span style="color: #cb0c9f;">Total Expenses</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="row">
+                <!-- Pie Chart for Total Profit -->
+                <div class="col-12">
+                    <div class="card">
+                        <h5 class="card-header">Total Profit and Profit Last Year</h5>
+                        <div class="card-body">
+                            <canvas id="profitChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+        </main>
+    </div>
+</div>
+
+<!-- Add your JavaScript code for Chart.js here -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var ctx2 = document.getElementById("chart-line").getContext("2d");
+
+        new Chart(ctx2, {
+            type: "line",
+            data: {
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                datasets: [
+                    {
+                        label: "Total Income",
+                        tension: 0.4,
+                        borderWidth: 3,
+                        borderColor: "#575f9a",
+                        backgroundColor: 'rgba(87, 95, 154, 0.2)',
+                        fill: true,
+                        data: [
+  {% for item in cumulative_income %}
+    {% if current_currency == 'KHR' %}
+      { x: "{{ item.month }}", y: {{ item.total * 4100 }} },
+    {% else %}
+      { x: "{{ item.month }}", y: {{ item.total }} },
+    {% endif %}
+  {% endfor %}
+],
+                    },
+                    {
+                        label: "Total Expenses",
+                        tension: 0.4,
+                        borderWidth: 3,
+                        borderColor: "#cb0c9f",
+                        backgroundColor: 'rgba(203, 12, 159, 0.2)',
+                        fill: true,
+                        data: [
+  {% for item in cumulative_expenses %}
+    {% if current_currency == 'KHR' %}
+      { x: "{{ item.month }}", y: {{ item.total * 4100 }} },
+    {% else %}
+      { x: "{{ item.month }}", y: {{ item.total }} },
+    {% endif %}
+  {% endfor %}
+],
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                    },
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            drawBorder: false,
+                            display: true,
+                            drawOnChartArea: true,
+                            drawTicks: false,
+                            borderDash: [5, 5],
+                        },
+                        ticks: {
+                            display: true,
+                            padding: 10,
+                            color: '#00000',
+                            font: {
+                                size: 11,
+                                family: "monospace",
+                                weight: "bold",
+                                lineHeight: 2,
+                            },
+                        },
+                    },
+                    x: {
+                        grid: {
+                            drawBorder: false,
+                            display: false,
+                            drawOnChartArea: false,
+                            drawTicks: false,
+                            borderDash: [5, 5],
+                        },
+                        ticks: {
+                            display: true,
+                            color: '#00000',
+                            padding: 20,
+                            font: {
+                                size: 11,
+                                family: "monospace",
+                                weight: "bold",
+                                lineHeight: 2,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Check if the profit chart canvas is present
+        var profitChartCanvas = document.getElementById('profitChart');
+
+        if (profitChartCanvas) {
+            var totalProfit = {{ total_profit_for_chart|default(0)|float }};
+            var totalProfitLastYear = {{ total_profit_last_year_for_chart|default(0)|float }};
+
+            var profitData = {
+                labels: ['Total Profit', 'Total Profit Last Year'],
+                datasets: [{
+                    data: [totalProfit, totalProfitLastYear],
+                    backgroundColor: ['#36A2EB', '#FFCE56']
+                }]
+            };
+
+            var profitChart = new Chart(profitChartCanvas, {
+                type: 'pie',
+                data: profitData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: {
+                        position: 'bottom',
+                    },
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

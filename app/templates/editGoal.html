@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+{% block body %}
+    <div class="add">
+        <h1 class="text-dark">Edit goal</h1>
+        <form method="POST" action="{{ url_for('editGoal', goal_id=goal.id) }}">
+            <div class="form-group text-dark">
+                <label for="amount">Amount</label>
+                <input type="number" id="amount" name="amount" class="form-control" value="{{ goal.amount }}">
+            </div>
+            <div class="form-group text-dark">
+                <label for="description">Description</label>
+                <input type="text" id="description" name="description" class="form-control" value="{{ goal.description }}">
+            </div>
+            <div class="form-group text-dark">
+                <label for="category">Category</label>
+                <input type="text" id="category" name="category" class="form-control" value="{{ goal.category }}">
+            </div>
+            <div class="form-group text-dark">
+                <label for="target_date">target Date</label>
+                <input type="date" id="target_date" name="target_date" class="form-control" value="{{ goal.target_date }}">
+            </div>
+            <div class="form-group text-dark">
+                <label for="priority">Priority Status</label>
+                <select name="priority" id="priority" class="form-control">
+					<option value="low" selected>Select Priority Status</option>
+					<option value="low">Low</option>
+					<option value="medium">Medium</option>
+                    <option value="high">High</option>
+				</select>
+            </div>
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select id="role" name="role" class="form-control" required>
+                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>user</option>
+                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>admin</option>
+                </select>
+            </div>            
+            <input class="btn btn-primary" type="submit" value="Submit" />
+        </form>
+    </div>
+{% endblock %}

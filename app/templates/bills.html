@@ -1,0 +1,318 @@
+{% extends 'layout.html' %} 
+{% block body %}
+<div class="add">
+    <h2 class="text-green">Bills</h2>
+    {% from "includes/_formhelpers.html" import render_field %}
+    <form class="form" method="POST" action="">
+        <div class="form-group row">
+            <div class="form-group col-md-6">
+                <input
+                    type="number"
+                    placeholder="Enter Bill Amount"
+                    class="form-control"
+                    name="amount"
+                    value="{{request.form.amount}}"
+                />
+            </div>
+            <div class="form-group category col-md-6">
+                <select name="category" id="category" class="form-control">
+                    <option value="Miscellaneous" selected="selected">Select Category</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Groceries">Groceries</option>
+                    <!-- Add more categories as needed -->
+					<option value="Education">Education</option>
+					<option value="Taxes">Taxes</option>
+					<option value="Online Shop">Online Shop</option>
+					<option value="Healthcare">Healthcare</option>
+					<option value="Entertainment">Entertainment</option>
+					<option value="Housing">Housing</option>
+					<option value="Transportation">Transportation</option>
+					<option value="Utilities">Utilities</option>
+					<option value="Trip & Vacation">Trip & Vacation</option>
+					<option value="Personal Finance">Personal Finance</option>
+					<option value="Subscriptions">Subscriptions</option>	
+                </select>
+            </div>
+            <div class="form-group col-md-10 col-lg-11">
+                <input
+                    type="text"
+                    placeholder="Enter Description"
+                    name="description"
+                    class="form-control"
+                    value="{{request.form.description}}"
+                />
+            </div>
+			<div class="form-group col-md-6">
+				<input
+					type="date"
+					placeholder="Expiration Date"
+					name="expiration_date"
+					class="form-control"
+					value="{{request.form.expiration_date}}"
+				/>
+			</div>
+			<div class="form-group col-md-6">
+				<select name="paid" id="paid" class="form-control">
+					<option value="0" selected>Select Paid Status</option>
+					<option value="1">Yes</option>
+					<option value="0">No</option>
+				</select>
+			</div>
+            <div class="form-group col-md-2 col-lg-1 btn">
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </form>
+    {% if result != 0 %}
+    <!-- Add your display logic for bills -->
+	<div class="current-month">
+		<h4 class="green-text float-left">
+			Bills Made This Month: <span class="green expense">{% if current_currency == 'USD' %}
+                ${{ totalBill }}
+            {% elif current_currency == 'KHR' %}
+                {{ totalBill * 4100 }} Riel
+            {% endif %}</span>
+		</h4>
+		<p class="text-light float-left swipe">Swipe to Edit/Delete</p>
+        <a href="/category_bill" class="btn btn-warning pie_chart float-right">Category Pie Chart</a>
+		<a href="/yearly_bar_bill" class="btn btn-warning bar_chart float-right">Comparison Bar Chart</a>
+		<a href="/monthly_bar_bill" class="btn btn-warning line_chart float-right">Daily Line Chart</a>
+	</div>
+    <div class="table-responsive">
+        <table class="table table-striped text-light">
+            <tr>
+                <th>Expiration Date</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Paid</th>
+                <th></th>
+                <th></th>
+            </tr>
+            {% for bill in bills %}
+            <tr>
+                <td data-expiration-date="{{ bill.expiration_date }}">
+                    <span data-description="{{ bill.description }}">{{ bill.expiration_date }}</span>
+                </td>
+                <td>                     {% if current_currency == 'USD' %}
+                    ${{ bill.amount }}
+                {% elif current_currency == 'KHR' %}
+                    {{ bill.amount * 4100 }} Riel
+                {% endif %}</td>
+                <td>{{bill.category}}</td>
+                <td>{{bill.description}}</td>
+                <td>{% if bill.paid == 1 or bill.paid == '1' %}Yes{% else %}No{% endif %}</td>
+                <td><a href="editBill/{{ bill.id }}" class="btn btn-primary pull-right">Edit</a></td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn btn-danger delete-transaction"
+                        data-toggle="modal"
+                        data-target="#exampleModalCenter"
+                        data-id="{{bill.id}}"
+                        data-url="{{ url_for('deleteBill', bill_id=bill.id) }}"
+                    >
+                        Delete
+                    </button>
+                </td>
+                <td>
+                    {% if bill.paid == '1' %}
+                    <!-- If the goal is complete, show a placeholder -->
+                    <button type="button" class="btn btn-success" disabled>
+                        Already Paid
+                    </button>
+                    {% else %}
+                    <!-- Add the form for completing the goal -->
+                    <form method="POST" action="{{ url_for('complete_bill', bill_id=bill.id) }}">
+                        <button type="submit" class="btn btn-success">
+                            Paid
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <!-- Add your modal for confirmation -->
+    <div
+        class="modal fade"
+        id="exampleModalCenter"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="exampleModalCenterTitle"
+        aria-hidden="true"
+    >
+    
+        <!-- Add your modal content -->
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLongTitle">Confirmation</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					Are you sure you want to delete this income transaction?
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<form class="modal-form" method="POST">
+						<input type="hidden" name="_method" value="DELETE" />
+						<input type="submit" value="Delete" class="btn btn-danger" />
+					</form>
+				</div>
+			</div>
+		</div>
+    </div>
+    {% endif %}
+</div>
+<!-- Add the push message styling -->
+<style>
+    .push-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #ff2c07; /* Orange color, adjust as needed */
+        color: #ffffff; /* Text color, adjust as needed */
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+
+<!-- ... (your existing HTML code) ... -->
+
+<script>
+    // Function to display styled push message
+    function displayPushMessage(message) {
+        // Create a notification element
+        const notification = document.createElement('div');
+        notification.className = 'push-notification';
+        notification.innerHTML = `<p>${message}</p>`;
+
+        // Append the notification to the body
+        document.body.appendChild(notification);
+
+        // Remove the notification after a few seconds (adjust as needed)
+        setTimeout(() => {
+            notification.remove();
+        }, 5000); // 5000 milliseconds (5 seconds) - adjust as needed
+    }
+
+    // Calculate the time until 9:00 AM today
+    const now = new Date();
+    const targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0, 0);
+    const timeUntilTarget = targetTime - now;
+
+    // Set a timeout to display the push message at 9:00 AM
+    setTimeout(() => {
+        // Fetch all bills with formatted date and paid status
+        const bills = document.querySelectorAll('.table tbody tr');
+
+        bills.forEach((bill) => {
+            const expirationDateElement = bill.querySelector('td[data-expiration-date]');
+
+            if (expirationDateElement) {
+                const expirationDateStr = expirationDateElement.getAttribute('data-expiration-date');
+                const expirationDate = new Date(expirationDateStr);
+                const descriptionElement = bill.querySelector('td[data-description]');
+                const description = descriptionElement ? descriptionElement.textContent : '';
+
+                // Calculate the days until the expiration date
+                const daysUntilExpiration = calculateDaysUntil(expirationDate);
+
+                // Display different messages based on the number of days until the expiration date
+                if (daysUntilExpiration === 2) {
+                    displayPushMessage(`${expirationDateStr} - Please pay the bill in 2 days!`);
+                } else if (daysUntilExpiration === 1) {
+                    displayPushMessage(`${expirationDateStr} - Please pay the bill in 1 day!`);
+                } else if (daysUntilExpiration === 0) {
+                    displayPushMessage(`${expirationDateStr} - Please pay the bill today for!`);
+                }
+
+                // Check if the bill is past due by 1 day
+                if (daysUntilExpiration === -1) {
+                    displayPushMessage(`${expirationDateStr} - Reminder: Pay the past due bill!`);
+                }
+            }
+        });
+    }, timeUntilTarget);
+
+    // Function to calculate the number of days until a date
+    function calculateDaysUntil(date) {
+        const today = new Date();
+        const timeDifference = date - today;
+        const daysUntil = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        return daysUntil;
+    }
+</script>
+
+
+
+<!-- 
+<script>
+    // Function to display styled push message
+    function displayPushMessage(message) {
+        // Create a notification element
+        const notification = document.createElement('div');
+        notification.className = 'push-notification';
+        notification.innerHTML = `<p>${message}</p>`;
+
+        // Append the notification to the body
+        document.body.appendChild(notification);
+
+        // Remove the notification after a few seconds (adjust as needed)
+        setTimeout(() => {
+            notification.remove();
+        }, 10000); // 10000 milliseconds (10 seconds) - adjust as needed
+    }
+
+    // Calculate the time until 10:20 PM today
+    const now = new Date();
+    const targetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 48, 0, 0);
+    const timeUntilTarget = targetTime - now;
+
+    // Set a timeout to display the push message at the specified time
+    setTimeout(() => {
+        // Fetch all bills with formatted date and paid status
+        const bills = document.querySelectorAll('.table tbody tr');
+
+        bills.forEach((bill) => {
+            const expirationDateElement = bill.querySelector('td[data-expiration-date]');
+
+            if (expirationDateElement) {
+                const expirationDateStr = expirationDateElement.getAttribute('data-expiration-date');
+                const expirationDate = new Date(expirationDateStr);
+
+                // Check if the description element exists
+                const descriptionElement = bill.querySelector('td[data-description]');
+                const description = descriptionElement ? descriptionElement.textContent : '';
+
+                if (isToday(expirationDate)) {
+                    // Use the description and expirationDate from the bill in the push message
+                    displayPushMessage(`This "${expirationDateStr}" has to pay the bill!!!`);
+                }
+            }
+        });
+    }, timeUntilTarget);
+
+    // Function to check if a date is today
+    function isToday(date) {
+        const today = new Date();
+        return (
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        );
+    }
+</script> -->
+
+<!-- ... (your existing HTML code) ... -->
+
+
+
+{% endblock %}

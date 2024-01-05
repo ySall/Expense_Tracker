@@ -1,0 +1,21 @@
+{% extends 'layout.html' %} 
+{% block body %}
+<div class="add">
+    <h1 class="text-light">Edit Income</h1>
+    <form method="POST" action="">
+        <div class="form-group text-light">
+            <label for="amount">Amount</label>
+            <input type="number" id="amount" name="amount" class="form-control" value="{{ income.amount }}">
+        </div>
+        <div class="form-group text-light">
+            <label for="source">Source</label>
+            <input type="text" id="source" name="source" class="form-control" value="{{ income.source }}">
+        </div>
+        <div class="form-group text-light">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" class="form-control" value="{{ income.description }}">
+        </div>
+        <input class="btn btn-primary" type="submit" value="Submit" />
+    </form>
+</div>
+{% endblock %}

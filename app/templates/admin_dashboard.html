@@ -1,0 +1,150 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+{% endblock %}
+
+{% block body %}
+<script>
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+
+<!-- Title -->
+<section class="mt-1">
+    <div class="container-fluid">
+        <h1 class="text-center text-muted mb-1">Admin Dashboard</h1>
+    </div>
+</section>
+<!-- 
+<section>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-12 col-lg-12 col-md-12 ml-auto">
+                <div class="row pt-md-5 mt-md-3 mb-5">
+                    <div class="col-xl-3 col-sm-6 p-2">
+                        <div class="card card-common">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <i class="fas fa-users fa-3x text-info"></i>
+                                    <div class="text-right text-secondary">
+                                        <h5>Total Users</h5>
+                                        <h3>{{ users|length }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-secondary">
+                                <i class="fas fa-sync mr-3"></i>
+                                <span>Updated Now</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> -->
+
+<!-- Table -->
+<section>
+    <div class="container-fluid table-responsive">
+        <div class="row mb-5 justify-content-center">
+            <div class="col-xl-10 col-lg-9 col-md-8"">
+                <div class="row align-items-center">
+                    <div class="ccol-12 mb-4">
+                        <h3 class="text-muted text-center mb-3">
+                            Users Management
+                        </h3>
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ user.first_name }}</td>
+                                        <td>{{ user.last_name }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>{{ user.role }}</td>
+                                        <td>
+                                            {% if user.id == session.get('userID') %}
+                                                Log in
+                                            {% else %}
+                                                Log out
+                                            {% endif %}
+                                        </td>
+                                        <!-- ... Your existing table ... -->
+                                        <td>
+                                            <a href="editUser/{{ user.id }}" class="btn btn-primary pull-right">Edit</a>
+                                        </td>
+                                        <td>
+                                            <!-- Button to trigger modal -->
+                                            <button
+                                                type="button"
+                                                class="btn btn-danger delete-transaction"
+                                                data-toggle="modal"
+                                                data-target="#deleteModal{{ user.id }}"
+                                                data-id="{{ user.id }}"
+                                                data-url="{{ url_for('deleteUser', user_id=user.id) }}"
+                                            >
+                                                Delete
+                                            </button>
+                                            <!-- Modal -->
+                                            <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="deleteModalLabel">Confirmation</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            Are you sure you want to delete this user?
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                            <!-- Form to handle deletion -->
+                                                            <form action="{{ url_for('deleteUser', user_id=user.id) }}" method="POST" style="display: inline;">
+                                                                <input type="hidden" name="_method" value="DELETE">
+                                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="clearfix">
+                            <div class="hint-text">Showing <b>{{ users|length }}</b> out of <b>{{ total_entries }}</b> entries</div>
+                            <ul class="pagination">
+                                {% for page in range(1, total_pages + 1) %}
+                                    <li class="page-item {% if page == current_page %}active{% endif %}">
+                                        <a href="{{ url_for('admin_dashboard', page=page) }}" class="page-link">{{ page }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Sign-up</title>
+        <link href="..\static\styles\signup.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Asap:wght@500&display=swap" rel="stylesheet">
+        <script src="https://kit.fontawesome.com/a81368914c.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    </head>
+<body>
+    <img class="wave" src="..\static\asset\background-02-01.svg ">
+    <!--container---------------------->
+    <div class="container" >
+    <!--sign-up-box-container--->
+        
+        <div class="img">
+            
+            <div id="png"><a href="/" title="HOME"><img style="width:55px; height:55px ; 
+            " src="..\static\asset\home-page.png"></a></div>
+            <img src="..\static\asset\signup-pana.svg">
+        </div>
+        <div class="sign-up">
+            <!--heading-->
+            <form action="/signup" method="POST">
+                <div class="msg">{{ msg }}</div>
+                <!-- <img src="..\static\asset\avatar.svg"> -->
+                <h2 class="title">Welcome!</h2>
+
+            <!--Password-box-->
+            <div class="input-div pass">
+                <!-- <img height="20px" src="..\static\asset\password.png" /> -->
+                    <div class="i"> 
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="div">
+                        <h5>First Name</h5>
+                        <input type="first_name" name="first_name" class="input" required/>
+                    </div>
+                </div>
+
+                <div class="input-div pass">
+                    <!-- <img height="20px" src="..\static\asset\password.png" /> -->
+                        <div class="i"> 
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="div">
+                            <h5>Last Name</h5>
+                            <input type="last_name" name="last_name" class="input" required/>
+                        </div>
+                    </div>
+
+            <!--name-box-->
+                <div class="input-div one">
+                    <div class="i">
+                        <i class="fas fa-user"></i>
+                    </div>
+                <!-- <img height="20px" src="..\static\asset\user.png" /> -->
+                    <div class="div">
+                        <h5>Username</h5>
+                        <input type="text" name="username" class="input" required/>
+                    </div>
+                </div>
+
+            <!--Email-box-->
+                <div class="input-div email">
+                <!-- <img height="12px" src="..\static\asset/email.png" /> -->
+                    <div class="i"> 
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="div">
+                        <h5>Email</h5>
+                        <input type="email" name="email" class="input" required/>
+                    </div>
+                </div>
+
+            <!--Password-box-->
+                <div class="input-div pass">
+                <!-- <img height="20px" src="..\static\asset\password.png" /> -->
+                    <div class="i"> 
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="div">
+                        <h5>Password</h5>
+                        <input type="password" name="password" class="input" required/>
+                    </div>
+                </div>
+
+				<div class="input-div pass">
+					<!-- <img height="20px" src="..\static\asset\password.png" /> -->
+						<div class="i"> 
+							<i class="fas fa-lock"></i>
+						</div>
+						<div class="div">
+							<h5>Confirm Password</h5>
+							<input type="password" name="confirm" class="input" required/>
+						</div>
+					</div>
+
+            <!--trems-->
+                <div class="trems">
+                    <input class="check" type="checkbox" required/>
+                    <p class="conditions">I read and agree to <a href="#">Trems &amp; Conditions</a></p>
+                </div>
+            <!--button--> 
+                <!-- <div class="toop"> -->
+                    <!-- <button   button type="submit" class="btn btn-primary" >CREATE ACCOUNT</button>  -->
+                <input type="submit" class="btn" value="CREATE ACCOUNT">
+                <!-- </div> -->
+            </form>
+
+            <!--sign-in-->
+            <div class="t">
+                <p class="conditions" id="p3">Already have an account <a href="/login">SING IN</a></p>
+            </div>
+            </div>
+        </div>
+    <!--text-container-->
+    <!-- <div class="text-container">
+        <div class="diag"><img class="fig1" width="150%" height="105%" src="..\static\asset\signup-pana.svg" ></div>
+    </div> -->
+    </div>
+</body>
+</html>

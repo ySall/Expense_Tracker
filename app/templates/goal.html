@@ -1,0 +1,141 @@
+{% extends 'layout.html' %}
+{% block body %}
+<div class="ml-3 mt-2">
+    <h1 class="font-weight-bold">Goal Planner</h1>
+    {% from "includes/_formhelpers.html" import render_field %}
+    <form class="form" method="POST" action="">
+        <div class="form-group row">
+            <div class="form-group col-md-6">
+                <input type="number" placeholder="Enter Bill Amount" class="form-control" name="amount"
+                    value="{{request.form.amount}}" required/>
+            </div>
+            <div class="form-group category col-md-6">
+                <select name="category" id="category" class="form-control" required>
+                    <option value="Retirement" selected="selected">Select Category</option>
+                    <option value="Retirement">Retirement</option>
+                    <option value="Debt Repayment">Debt Repayment</option>
+                    <option value="Investments">Investments</option>
+                    <option value="Personal Development">Personal Development</option>
+                    <option value="Health and Wellness">Health and Wellness</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Home Expenses">Home Expenses</option>
+                    <option value="Vacations">Vacations</option>
+                    <option value="Family">Family</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+
+                </select>
+            </div>
+            <div class="form-group col-md-10 col-lg-12">
+                <input type="text" placeholder="Enter Description" name="description" class="form-control" 
+                    value="{{request.form.description}}" />
+            </div>
+            <div class="form-group col-md-6">
+                <input type="text" placeholder="Target Date" name="target_date_text" class="form-control"
+                    value="{{ request.form.target_date }}" onfocus="showDatePicker(this)" />
+                <input type="date" name="target_date" class="form-control" style="display: none;"
+                    value="{{ request.form.target_date }}" onblur="hideDatePicker(this)" required/>
+            </div>
+
+            <div class="form-group col-md-6">
+                <select name="priority" id="priority" class="form-control">
+                    <option value="low" selected>Select Priority Status</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="form-group col-md-2 col-lg-1 btn">
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </form>
+    <div class="table-responsive">
+        <table class="table table-striped text-light">
+            <tr>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Priority</th>
+                <th>Description</th>
+                <th>Target Date</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+            {% for goal in goals %}
+            <tr>
+                <td>{{goal.category}}</td>
+                <td>{% if current_currency == 'USD' %}
+                    ${{ goal.amount }}
+                {% elif current_currency == 'KHR' %}
+                    {{ goal.amount * 4100 }} Riel
+                {% endif %}</td>
+                <td>{{goal.priority}}</td>
+                <td>{{goal.description}}</td>
+                <td>{{goal.target_date}}</td>
+                <td><a href="editGoal/{{ goal.id }}" class="btn btn-primary pull-right">Edit</a></td>
+                <td>
+                    <button type="button" class="btn btn-danger delete-transaction" data-toggle="modal"
+                        data-target="#exampleModalCenter" data-id="{{goal.id}}"
+                        data-url="{{ url_for('deleteGoal', goal_id=goal.id) }}">
+                        Delete
+                    </button>
+                </td>
+                <td>
+                    {% if goal.status == 'Complete' %}
+                    <!-- If the goal is complete, show a placeholder -->
+                    <button type="button" class="btn btn-success" disabled>
+                        Already Complete
+                    </button>
+                    {% else %}
+                    <!-- Add the form for completing the goal -->
+                    <form method="POST" action="{{ url_for('complete_goal', goal_id=goal.id) }}">
+                        <button type="submit" class="btn btn-success">
+                            Finish
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Confirmation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this income transaction?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <form class="modal-form" method="POST">
+                        <input type="hidden" name="_method" value="DELETE" />
+                        <input type="submit" value="Delete" class="btn btn-danger" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><script>
+                function showDatePicker(textInput) {
+                    textInput.placeholder = "dd----yyyy";
+                    textInput.style.display = 'none';
+                    textInput.nextElementSibling.style.display = 'block';
+                    textInput.nextElementSibling.focus();
+                }
+
+                function hideDatePicker(dateInput) {
+                    if (!dateInput.value) {
+                        dateInput.style.display = 'none';
+                        dateInput.previousElementSibling.style.display = 'block';
+                        dateInput.previousElementSibling.placeholder = "Target Date";
+                    }
+                }
+            </script>
+{% endblock %}

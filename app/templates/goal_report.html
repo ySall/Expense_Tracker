@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div class="report">
+    <h1 class="text-green">Goal Report</h1>
+    <br>
+
+    <div class="select-list">
+        <form method="POST" action="">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="income">
+        <h3 style="color: #de2a57;">Total Bill</h3>
+        <table class="table table-striped text-light">
+            <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+            {% for goal_item in goal_data_all %}
+            <tr>
+                <td>{{ goal_item.category }}</td>
+                <td>{{ goal_item.description }}</td>
+                <td>{{ month_abbreviation(goal_item.month) }}</td>
+                <td>{{ goal_item.year }}</td>
+                <td>{% if current_currency == 'USD' %}
+                    ${{ goal_item.total }}
+                    {% elif current_currency == 'KHR' %}
+                    {{ goal_item.total * 4100 }} Riel
+                    {% endif %}
+                </td>
+                <td>{{ goal_item.status }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <br>
+    <div class="chart" width="10" height="10">
+        <a href="{{ url_for('download_goal_csv') }}" class="btn btn-primary">Download All Bill CSV</a>
+    </div>
+    <br>
+    <br>
+    <div class="select-list">
+        <form method="POST" action="{{ url_for('download_goal_csv') }}">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Download Bill</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-body">
+        <canvas id="goalChart" width="300" height="150"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Function to generate labels and data for the chart
+        function generateChartData(goal_data_all) {
+            var labels = [];
+            var data = [];
+
+            {% for goal_item in goal_data_all %}
+                labels.push("{{ goal_item.category }}");
+                {% if current_currency == 'USD' %}
+                    data.push({{ goal_item.total }});
+                {% elif current_currency == 'KHR' %}
+                    data.push({{ goal_item.total * 4100 }});
+                {% endif %}
+            {% endfor %}
+
+            return { labels: labels, data: data };
+        }
+
+        var chartData = generateChartData({{ goal_data_all | tojson }});
+
+        var ctx = document.getElementById('goalChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Total Goal',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)', // Customize the color as needed
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

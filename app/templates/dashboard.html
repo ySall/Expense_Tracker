@@ -1,0 +1,590 @@
+{% extends 'layout.html' %} {% block body %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+
+  <!-- Add links to Chart.js library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .custom-legends {
+      border: 1px solid black;
+      list-style-type: none;
+      padding-left: 0px;
+    }
+
+    .custom-legends li {
+      border: 1px solid lightgray;
+      list-style-type: none;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+    }
+
+    .dot {
+      border-radius: 50%;
+      height: 15px;
+      width: 15px;
+      margin-right: 10px;
+    }
+
+    /* Adjust the legend container styles */
+    #legend {
+      margin-top: 10px;
+      /* Add margin to separate from the chart */
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>{{ title }}</h1>
+  </header>
+
+  <main>
+    <h1 class="text-dark mt-2 font-weight-bold ml-3">Dashboard</h1>
+    <div class="container-fluid mb-2 text-light">
+      <div class="row mb-2">
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(227, 113, 217); color: white;">Total Expense</h5>
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-8">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if today_expense_data and today_expense_data['today_expense'] is not none %}
+        {% if current_currency == 'USD' %}
+            ${{ today_expense_data['today_expense'] }}
+        {% elif current_currency == 'KHR' %}
+            {{ today_expense_data['today_expense'] * 4100 }} Riel
+        {% else %}
+            {{ today_expense_data['today_expense'] }} {# Handle other currencies as needed #}
+        {% endif %}
+    {% else %}
+    {% if current_currency == 'USD' %}
+    $0.00
+{% elif current_currency == 'KHR' %}
+    0 Riel
+    {% endif %}
+    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(187, 227, 113); color: white;">Total Month Expense</h5>
+
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-8">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if this_month_expense_data %}
+                    {% if current_currency == 'USD' %}
+                    ${{ this_month_expense_data['month_expense'] }}
+                    {% elif current_currency == 'KHR' %}
+                    {{ this_month_expense_data['month_expense'] * 4100 }} Riel
+                    {% endif %}
+                    {% else %}
+                    {% if current_currency == 'USD' %}
+                    $0.00
+                    {% elif current_currency == 'KHR' %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card text-dark d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(113, 214, 227); color: white;">This Month Income</h5>
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-8">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if this_month_income_data %}
+                    {% if current_currency == 'USD' %}
+                    ${{ this_month_income_data['month_income'] }}
+                    {% elif current_currency == 'KHR' %}
+                    {% if this_month_income_data['month_income'] is not none %}
+                    {{ this_month_income_data['month_income'] * 4100 }} Riel
+                    {% else %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                    {% else %}
+                    {% if current_currency == 'USD' %}
+                    $0.00
+                    {% elif current_currency == 'KHR' %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(227, 113, 113); color: white;">Most Spending Category</h5>
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-12">
+                  <h3 class="d-flex align-items-center mb-1">
+                    {% if most_spending_category %}
+                    {{ most_spending_category.category }}
+                    {% else %}
+                    No expenses this month
+                    {% endif %}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-2">
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(227, 178, 113); color: white;">Total Expense</h5>
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-12">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if total_expense %}
+                    {% if current_currency == 'USD' %}
+                    ${{ total_expense }}
+                    {% elif current_currency == 'KHR' %}
+                    {% if total_expense is not none %}
+                    {{ total_expense * 4100 }} Riel
+                    {% else %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                    {% else %}
+                    {% if current_currency == 'USD' %}
+                    $0.00
+                    {% elif current_currency == 'KHR' %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(113, 227, 142); color: white;">Total Income</h5>
+
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-12">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if total_income %}
+                    {% if current_currency == 'USD' %}
+                    ${{ total_income }}
+                    {% elif current_currency == 'KHR' %}
+                    {% if total_income is not none %}
+                    {{ total_income * 4100 }} Riel
+                    {% else %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                    {% else %}
+                    {% if current_currency == 'USD' %}
+                    $0.00
+                    {% elif current_currency == 'KHR' %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(195, 113, 227); color: white;">Total Month Bill</h5>
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-12">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if this_month_bill_data %}
+                    {% if current_currency == 'USD' %}
+                    ${{ this_month_bill_data['month_bill'] }}
+                    {% elif current_currency == 'KHR' %}
+                    {% if this_month_bill_data['month_bill'] is not none %}
+                    {{ this_month_bill_data['month_bill'] * 4100 }} Riel
+                    {% else %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                    {% else %}
+                    {% if current_currency == 'USD' %}
+                    $0.00
+                    {% elif current_currency == 'KHR' %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-3 mb-1">
+          <div class="card text-dark d-flex flex-column">
+            <h5 class="card-header" style="background-color: rgb(113, 144, 227); color: white;">Total Bill</h5>
+            <div class="card-statistic-3 p-3 flex-fill">
+              <div class="row align-items-center mb-2 d-flex">
+                <div class="col-12">
+                  <h2 class="d-flex align-items-center mb-0">
+                    {% if total_bill %}
+                    {% if current_currency == 'USD' %}
+                    ${{ total_bill['total_bills'] }}
+                    {% elif current_currency == 'KHR' %}
+                    {% if total_bill['total_bills'] is not none %}
+                    {{ total_bill['total_bills'] * 4100 }} Riel
+                    {% else %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                    {% else %}
+                    {% if current_currency == 'USD' %}
+                    $0.00
+                    {% elif current_currency == 'KHR' %}
+                    0 Riel
+                    {% endif %}
+                    {% endif %}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row text-light mb-3">
+        <div class="col-lg-12">
+          <div class="card z-index-2">
+            <div class="card-header pb-0">
+              <h5>Expense & Income overview</h5>
+            </div>
+            <div class="card-body p-3">
+              <div class="chart">
+                <canvas id="chart-line" class="chart-canvas" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row text-light">
+        <div class="col-lg-4 mb-lg-0 mb-4">
+          <div class="card z-index-2">
+            <div class="card-header pb-0">
+              <h5>Spending Category</h5>
+            </div>
+            <div class="card-body">
+              <div class="chart" style="height: 688px;">
+                <canvas id="pie-chart" class="chart-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="card z-index-2">
+            <div class="card-header pb-0 d-flex">
+              <h4 class="mr-auto mt-1">Latest Transactions</h4>
+              <a href="addTransactions" class="btn btn-success line_chart mb-2">Edit Transactions</a>
+            </div>
+            <div class="card-body p-3">
+              <div class="table-responsive">
+                <table class="table table-striped text-light">
+                  <tr>
+                    <th>Date / Time</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                  {% for i in range(15) %}
+                  {% if i < transactions|length %} <tr>
+                    <td>{{ transactions[i].date }}</td>
+                    <td>
+                      {% if current_currency == 'USD' %}
+                      ${{ transactions[i].amount }}
+                      {% elif current_currency == 'KHR' %}
+                      {{ transactions[i].amount * 4100 }} Riel
+                      {% endif %}
+                    </td>
+                    <td>{{ transactions[i].category }}</td>
+                    <td>{{ transactions[i].description }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                      <td>--/--</td>
+                      <td>--/--</td>
+                      <td>--/--</td>
+                      <td>--/--</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Add your JavaScript code for Chart.js here -->
+  <script>
+
+    var categoryData = {
+      labels: [{% for entry in category_data %}"{{ entry.category }}", {% endfor %}],
+datasets: [{
+  data: [
+    {% for entry in category_data %}
+      {% if current_currency == 'KHR' %}
+        {{ entry.total_expense * 4100 }},
+      {% else %}
+        {{ entry.total_expense }},
+      {% endif %}
+    {% endfor %}
+  ],
+      backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#33cc33", "#9966ff", "#ffcc76", "#cc3300", "#3399ff", "#ff9900"] // You can customize colors
+        }]
+    };
+
+
+    var pieChart = new Chart(document.getElementById('pie-chart'), {
+      type: 'doughnut',  // Set chart type to 'doughnut'
+      data: categoryData,
+      options: {
+        responsive: true, // Set to true to make the chart responsive
+        maintainAspectRatio: false, // Set to false to allow the chart to adjust its size
+        plugins: {
+          legend: {
+
+            display: true,
+            align: "start",
+            position: 'bottom',
+            itemWidth: 120, // Set the desired width for each legend item
+
+            labels: {
+              font: {
+                family: 'monospace', // Use a generic monospaced font
+                weight: 'bold',
+              },
+              padding: 20,
+              boxWidth: 20,
+              boxHeight: 20,
+              generateLabels: function (chart) {
+                var data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  return data.labels.map(function (label, i) {
+                    var dataset = data.datasets[0];
+                    var backgroundColor = dataset.backgroundColor[i];
+                    var categoryName = label;
+                    var categoryExpense = dataset.data[i];
+                    var totalExpense = dataset.data.reduce((a, b) => a + b, 0);
+                    var percentage = ((categoryExpense / totalExpense) * 100).toFixed(2);
+
+                    return {
+                      text: generateLegendText('{{ current_currency }}', backgroundColor, categoryName, categoryExpense, percentage),
+                      fillStyle: backgroundColor,
+                      hidden: isNaN(dataset.data[i]) || dataset.data[i] <= 0,
+                      index: i,
+                    };
+                  });
+                }
+                return [];
+              },
+            },
+          },
+
+        },
+        layout: {
+          padding: {
+            top: 10, // Adjust the top padding to create space for legend
+          },
+        },
+        cutout: '60%',
+        elements: {
+          arc: {
+            borderWidth: 0,  // Set the border width to 0 to remove borders between segments
+          },
+        },
+        responsive: true,
+        radius: '80%', // Adjust the size of the doughnut chart
+      },
+    });
+
+
+function generateLegendText(current_currency, backgroundColor, categoryName, categoryExpense, percentage) {
+  // Set the desired length of the text block (adjust as needed)
+  const textBlockLength = 43;
+
+  // Calculate the number of spaces needed to align to the end vertical line
+  const spacesNeeded = textBlockLength - (categoryName.length + categoryExpense.toFixed(2).length + percentage.length + 8);
+
+  // Construct the legend text with the calculated spaces
+  const spaces = '\u2002'.repeat(spacesNeeded); // Using en space (non-breaking)
+
+  let legendText;
+  if (current_currency === 'KHR') {
+    legendText = categoryName + spaces + categoryExpense.toFixed(0) + ' Riel - ' + percentage + '%';
+  } else {
+    legendText = categoryName + spaces + '$' + categoryExpense.toFixed(2) + ' - ' + percentage + '%';
+  }
+
+  return legendText;
+}
+
+    window.addEventListener('resize', () => {
+      pieChart.resize();
+    });
+
+    var ctx2 = document.getElementById("chart-line").getContext("2d");
+
+    var gradientStroke1 = ctx2.createLinearGradient(0, 230, 0, 50);
+    gradientStroke1.addColorStop(1, 'rgba(203,12,159,0.2)');
+    gradientStroke1.addColorStop(0.2, 'rgba(72,72,176,0.0)');
+    gradientStroke1.addColorStop(0, 'rgba(203,12,159,0)');
+
+    var gradientStroke2 = ctx2.createLinearGradient(0, 230, 0, 50);
+    gradientStroke2.addColorStop(1, 'rgba(20,23,39,0.2)');
+    gradientStroke2.addColorStop(0.2, 'rgba(72,72,176,0.0)');
+    gradientStroke2.addColorStop(0, 'rgba(20,23,39,0)');
+
+    new Chart(ctx2, {
+      type: "line",
+      data: {
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        datasets: [
+          {
+            label: "Income",
+            tension: 0.4,
+            borderWidth: 0,
+            pointRadius: 0,
+            borderColor: "#575f9a",
+            borderWidth: 3,
+            backgroundColor: gradientStroke2,
+            fill: true,
+            data: [
+  {% for i in range(1, 13) %}
+    {% set income_entry = income_data | selectattr('month', 'equalto', i) | first %}
+    {% if current_currency == 'KHR' %}
+      {{ income_entry['total_income'] * 4100 if income_entry else 0 }},
+    {% else %}
+      {{ income_entry['total_income'] if income_entry else 0 }},
+    {% endif %}
+  {% endfor %}
+],
+    maxBarThickness: 6
+            },
+    {
+      label: "Expense",
+        tension: 0.4,
+          borderWidth: 0,
+            pointRadius: 0,
+              borderColor: "#cb0c9f",
+                borderWidth: 3,
+                  backgroundColor: gradientStroke1,
+                    fill: true,
+                    data: [
+  {% for i in range(1, 13) %}
+    {% set expense_entry = expense_data | selectattr('month', 'equalto', i) | first %}
+    {% if current_currency == 'KHR' %}
+      {{ expense_entry['total_expense'] * 4100 if expense_entry else 0 }},
+    {% else %}
+      {{ expense_entry['total_expense'] if expense_entry else 0 }},
+    {% endif %}
+  {% endfor %}
+],
+    maxBarThickness: 6
+    }],
+  },
+    options: {
+      responsive: true,
+        maintainAspectRatio: false,
+          plugins: {
+        legend: {
+          display: false,
+        },
+
+      },
+      interaction: {
+        intersect: false,
+          mode: 'index',
+      },
+      scales: {
+        y: {
+          grid: {
+            drawBorder: false,
+              display: true,
+                drawOnChartArea: true,
+                  drawTicks: false,
+                    borderDash: [5, 5],
+          },
+          ticks: {
+            display: true,
+              padding: 10,
+                color: '#00000',
+                  font: {
+              size: 11,
+                family: "monospace",
+                  weight: "bold",
+                    lineHeight: 2,
+            },
+          },
+        },
+        x: {
+          grid: {
+            drawBorder: false,
+              display: false,
+                drawOnChartArea: false,
+                  drawTicks: false,
+                    borderDash: [5, 5],
+          },
+          ticks: {
+            display: true,
+              color: '#00000',
+                padding: 20,
+                  font: {
+              size: 11,
+                family: "monospace",
+                  weight: "bold",
+                    lineHeight: 2,
+            },
+          },
+        },
+      },
+    },
+});
+  </script>
+</body>
+
+</html>
+{% endblock %}
+```

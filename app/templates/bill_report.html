@@ -1,0 +1,163 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+<div class="report">
+    <h1 class="text-green">Bill Report</h1>
+    <br>
+
+    <div class="select-list">
+        <form method="POST" action="">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="income">
+        <h3 style="color: #de2a57;">Total Bill</h3>
+        <table class="table table-striped text-light">
+            <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Total</th>
+                <th>Paid</th>
+            </tr>
+            {% for bill_item in bill_data_all %}
+            <tr>
+                <td>{{ bill_item.category }}</td>
+                <td>{{ bill_item.description }}</td>
+                <td>{{ month_abbreviation(bill_item.month) }}</td>
+                <td>{{ bill_item.year }}</td>
+                <td>
+                    {% if current_currency == 'USD' %}
+                    ${{ bill_item.total }}
+                    {% elif current_currency == 'KHR' %}
+                    {{ bill_item.total * 4100 }} Riel
+                    {% endif %}
+                </td>
+                <td>{{ status_abbreviation(bill_item.paid) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <br>
+    <div class="chart" width="10" height="10">
+        <div class="card-body">
+            <canvas id="incomeChart" width="400" height="150"></canvas>
+        </div>
+        <a href="{{ url_for('download_bill_csv') }}" class="btn btn-primary">Download All Bill CSV</a>
+    </div>
+    <br>
+    <br>
+    <div class="select-list">
+        <form method="POST" action="{{ url_for('download_bill_csv') }}">
+            <div class="form-group row">
+                <div class="form-group month col-md-4">
+                    <select name="month" id="month" class="form-control">
+                        <option value="00">Select Month</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="year" id="year" class="form-control">
+                        <option value="0">Select Year</option>
+                        {% for year_item in available_years %}
+                            <option value="{{ year_item }}">{{ year_item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary">Download Bill</button>
+                </div>
+            </div>
+            <canvas id="billChart" width="400" height="200"></canvas>
+        </form>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Function to generate labels and data for the chart
+        function generateChartData(bill_data_all) {
+            var labels = [];
+            var data = [];
+
+            {% for bill_item in bill_data_all %}
+                labels.push("{{ month_abbreviation(bill_item.month) }}");
+                {% if current_currency == 'USD' %}
+                    data.push({{ bill_item.total }});
+                {% elif current_currency == 'KHR' %}
+                    data.push({{ bill_item.total * 4100 }});
+                {% endif %}
+            {% endfor %}
+
+            return { labels: labels, data: data };
+        }
+
+        var chartData = generateChartData({{ bill_data_all | tojson }});
+
+        var ctx = document.getElementById('incomeChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Total Bill',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
